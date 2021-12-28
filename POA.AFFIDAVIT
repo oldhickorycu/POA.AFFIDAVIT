@@ -1,0 +1,341 @@
+[Created by RD.SYMFORM.DESIGNER on 11/22/2021 at 14:27
+ Driver           - POA.AFFIDAVIT
+ Field Assignment - POA.AFFIDAVIT.INC
+ Symform Commands - POA.AFFIDAVIT.SYMFORM
+ Form file name   - POA.AFFIDAVIT.SFF
+
+ Case Number  :
+ Credit Union :
+ Form         :
+ Form Source  :
+
+ Created By   :
+ Created On   : 11/22/2021
+
+ Modified By  :
+ Modified Date:
+ Modifications:
+]
+SUBROUTINE DEMAND
+
+WINDOWS
+
+TARGET = ACCOUNT
+
+DEFINE
+  #INCLUDE "RD.GETDATA.DEF"
+  #INCLUDE "RD.SYMFORM.DEF"
+  #INCLUDE "RD.NAME.AND.ACCOUNT.DEF"
+  #INCLUDE "RD.SPELL.DEF"
+  #INCLUDE "MVP.DEF"
+  #INCLUDE "MAILADDRESS.DEF" 
+  
+
+
+  CUNAME          = CHARACTER
+  CUNUMBER        = CHARACTER
+  FORMNAME        = CHARACTER
+  FROMADDRESS     = CHARACTER
+  USEOPTICAL      = NUMBER
+  PRINTOPTION     = NUMBER
+  DUPLEXTYPE      = NUMBER
+  PAPERSIZETYPE   = NUMBER
+  ORIENTATIONTYPE = NUMBER
+  COPYQTY         = NUMBER
+
+
+  USEOTGFLAG2     = NUMBER
+  EXTRAZEROS      = NUMBER
+  NWPATH1         = CHARACTER
+  NWPATH2         = CHARACTER
+  BRNUM           = NUMBER
+  CARDNUMINDEX    = CHARACTER
+  COPYCOUNT       = CHARACTER
+  DUPLEXFLAG = CHARACTER (1)
+
+  IMGID           = CHARACTER  
+  IMGTYPE         = NUMBER     
+  IMGSOURCE       = CHARACTER 
+  IMGHELPERROR    = CHARACTER 
+  IMGHELPNUMBER   = NUMBER
+  IMGHELPCURRLINE = CHARACTER
+  IMGHELPPREVLINE = CHARACTER
+  IMGDOCTYPE      = CHARACTER
+  IMGDOCTYPEINDEX = CHARACTER
+  IMGCABINET      = CHARACTER
+  IMGCOMMENTINDEX = NUMBER
+
+   SUBJECT=CHARACTER(40)
+   TEXT=CHARACTER(75) ARRAY(99)
+  I=NUMBER
+  J=NUMBER
+  DONE=NUMBER
+  NUMLINES=NUMBER
+
+  FORMDATA        = CHARACTER(040) ARRAY(019)
+  TRUE            = 1
+  FALSE           = 0
+  CHECKED         = "1"
+  UNCHECKED       = "0"
+  COMBOVALUE      = CHARACTER(040) ARRAY(000,250)
+  COMBOCODE       = NUMBER         ARRAY(000,250)
+  MLDATA          = CHARACTER(040) ARRAY(000,000)
+  MLINDEX         = NUMBER         ARRAY(019)
+
+  USEOTGFLAG   = NUMBER
+  DEBUG     = NUMBER
+END
+
+
+SETUP
+  CUNUMBER        = "330"
+  CUNAME          = "Old Hickory Credit Union"
+  IMGSOURCE       = "MEMBERSHIP"
+  FORMNAME        = "POA.AFFIDAVIT"
+  QUOTE           = CTRLCHR(34)
+  USEOTGFLAG      = TRUE
+  SYMFORMINPUT    = TRUE
+  FORMSAVED       = FALSE
+  FORMSBMT        = FALSE
+  USENEWIDFIELDS  = TRUE
+
+  COPYQTY         = 1
+  ORIENTATIONTYPE = 1   [ 1  - PORTRAIT                      ]
+                        [ 2  - LANDSCAPE                     ]
+  DUPLEXTYPE      = 1   [ 1  - SIMPLEX                       ]
+                        [ 2  - DUPLEX VERTICAL               ]
+                        [ 3  - DUPLEX HORIZONTAL             ]
+  PAPERSIZETYPE   = 1   [ 1  - LETTER 8 1/2 x 11 in          ]
+                        [ 2  - LETTER SMALL 8 1/2 X 11 IN    ]
+                        [ 3  - TABLOID 11 X 17 IN            ]
+                        [ 4  - LEDGER 17 X 11 IN             ]
+                        [ 5  - LEGAL 8 1/2 X 14 IN           ]
+                        [ 6  - STATEMENT 5 1/2 X 8 1/2 IN    ]
+                        [ 7  - EXECUTIVE 7 1/4 X 10 1/2 IN   ]
+                        [ 8  - A3 297 X 420 MM               ]
+                        [ 9  - A4 210 X 297 MM               ]
+                        [ 10 - A4 SMALL 210 X 297 MM         ]
+  USEOPTICAL      = 0   [ 0  - NO OPTICAL STORAGE            ]
+                        [ 1  - OPTICAL STORAGE               ]
+  PRINTOPTION     = 0   [ 0  - CLOSE AFTER SUBMIT THEN PRINT ]
+                        [ 1  - CLOSE AFTER JUST PRINT        ]
+                        [ 2  - AUTO PRINT                    ]
+                        [ 3  - AND UP - USER DEFINED         ]
+
+  STICKYFORMID    = "POA.AFFIDAVIT"
+[
+  STICKYFORMID is a 20 character text field that helps identify
+  the note and tie it to the form. Default is the Driver name.
+]
+
+  FOR STICKYLOOP=0 TO 50
+   DO
+    STICKYORD(STICKYLOOP)=-1
+   END
+
+  IF SYSWINDOWSLEVEL<2 THEN
+   DO
+    NEWLINE
+    NEWLINE
+    PRINT "SYMFORM SPECFILES CAN ONLY BE RUN FROM SYMITAR FOR WINDOWS"
+    NEWLINE
+    NEWLINE
+    TERMINATE
+   END
+
+  CALL LOADNAMEANDACCOUNTFIELDS
+
+  CALL ASSIGNFIELDVARIABLES
+  CALL UPDATESYMFORMFIELDS
+
+  CALL LOADSTICKYNOTESACCOUNT
+[
+  This is where you would place the call to load Sticky Notes from
+  either Account, Share, Loan, or Loan Application record:
+  CALL LOADSTICKYNOTESACCOUNT or
+  CALL LOADSTICKYNOTESSHARE or
+  CALL LOADSTICKYNOTESLOAN or
+  CALL LOADSTICKYNOTESLOANAPP
+  Only one procedure can be called. Make sure you have the
+  corresponding INCLUDE file with the record definitions.
+]
+
+[
+  This is where you would create custom tool bar items.
+  Valid tool bar control types are 6=Button, 5=Combo Box, 8=List box.
+  For example to create a single button:
+  WINDOWSSEND(332,"TID=1,CT=6")
+]
+
+  IF PRINTOPTION = 2 THEN
+  DO
+    WINDOWSSEND(332, "MBNA=NOTHING")
+    CALL GETRESPONSE
+    WINDOWSSEND(332, "SAVE=DEFAULTPRINT")
+    CALL GETRESPONSE
+    WINDOWSSEND(332, "CLOSE,MIN")
+    TERMINATE
+  END
+  IF DEBUG = TRUE THEN
+  DO
+    FOR FORMLOOP = 1 TO FIELDMAX
+    DO
+      WINDOWSSEND(332, "ID=" + FORMAT("999", FORMLOOP) + ",V=1,E=1")
+    END
+  END
+
+  CALL SENDBUTTON
+
+  TEMPNUM=1
+  WINDOWSSEND(332, "SP=001,SF=001")
+  WHILELIMIT=100000
+  WHILE (VALUE(RESPSF)>0 OR RESPSF="") AND CLOSEFORM=FALSE
+   DO
+    CALL GETRESPONSE
+    CALL CLEARCBVALUES
+    CALL PROCESSFIELDEVENT
+
+    IF RESPCMD<>"" THEN
+     DO
+      IF RESPCMD="SBMT" THEN
+       DO
+        WINDOWSSEND(332,"SBMT")
+        RESPID="1"
+        WHILE RESPVA<>"END" OR RESPID<>"0"
+         DO
+          CALL GETRESPONSE
+          FORMDATA(VALUE(RESPID))=RESPVA
+         END
+        CALL UPDATEFIELDVARIABLES
+
+        FORMSBMT=TRUE
+
+        #INCLUDE "RD.NAME.AND.ACCOUNT.FMP"
+        CALL LOADNAMEANDACCOUNTFIELDS
+
+        [Additional FMPERFORM commands can be performed here]
+
+        CALL ASSIGNFIELDVARIABLES
+        CALL UPDATESYMFORMVALUES
+        
+        WINDOWSSEND(332, "MFLAG=0")
+        WINDOWSSEND(332, "MBOK=ALL FIELDS SENT TO HOST")
+      END
+
+  [Member Vantage Point SymXchange Procedure]
+    [MVPFORMNAME = "AFFIDAVIT" 
+    MVPSLR = "L" [ * S = SHARE, L = LOAN, A = APPLICATION, R = RECEIPT * ]
+    MVPID = "00"+LID [ * IF R USE "0000" IF SHARE, LOAN,  OR LOANAPP PLACE ID VARIABLE * ]
+    MVPLAID = "00"+LAPPLICATIONID
+    MVPBRNUM = FORMAT("99",LBRANCH)
+    CALL MVPSEND]
+
+ 
+
+      IF RESPCMD="SAVE" THEN
+       DO
+        IF USEOPTICAL>0 THEN
+         DO
+         
+          WINDOWSSEND(332,"SAVE=SAVE")
+          CALL GETRESPONSE
+          IF CHARACTERSEARCH(RESPSAV,"-")>0 THEN
+           DO
+            IF RESPSAV="-8" THEN
+             DO
+              WINDOWSSEND(332,"MBOK=You cannot send to optical. "+
+                              "Your SymForm registration needs to be updated. "+
+                              "Please contact Symitar")
+             END
+            ELSE
+             DO
+              WINDOWSSEND(332,"SAVE=SAVE,SAVEMODE=1")   [,SAVEPATH=S:\IDX\MEMBERSHIP~_INSTITUTION_~_CABINET_~_TYPE_~_DOCNAME_~ACCOUNT NUMBER~NAME~TAX ID~DOC DATE~BRANCH]
+              CALL GETRESPONSE
+             END
+             END
+             IF CHARACTERSEARCH(RESPSAV,"-")>0 THEN
+           COPYQTY=COPYQTY+1
+           END
+          
+
+        WINDOWSSEND(332,"SAVE=PRINT"+
+                        ",ORIENTATION="+FORMAT("9",ORIENTATIONTYPE)+
+                        ",PAPERSIZE="+FORMAT("#9",PAPERSIZETYPE)+
+                        ",DUPLEX="+FORMAT("9",DUPLEXTYPE)+
+                        ",COPIES="+FORMAT("9",COPYQTY))
+        CALL GETRESPONSE
+
+        IF CHARACTERSEARCH(RESPSAV,"-")=0 AND VALUE(RESPSAV)<>0 THEN
+          FORMSAVED = TRUE
+
+        IF PRINTOPTION=0 AND FORMSAVED=TRUE AND FORMSBMT=TRUE OR
+           PRINTOPTION=1 AND FORMSAVED=TRUE                   OR
+           PRINTOPTION=3                                      THEN
+           [Other PRINTOPTIONS go here]
+         DO
+          WINDOWSSEND(332,"CLOSE,MIN")
+          CLOSEFORM=TRUE
+         END
+       END
+     END
+
+    IF RESPTID<>"" THEN
+      CALL PROCESSTOOLBAREVENT
+   END
+ END  
+
+
+
+PRINT TITLE="TEST"
+  SUPPRESSNEWLINE
+END
+
+
+[Whenever the user attempts to change fields by ether using the mouse or
+ the tab key a number of pieces of data are sent to this procedure:
+ RESPSF = Indicates the field ID that was attempted to be moved to.
+ RESPID = Indicates the field ID the user was on.
+ RESPVA = Indicates the value that was entered into the field.
+ RESPSP = Indicates the page that was attempted to be moved to.
+ RESPRD = Indicates the method used to move between field IDs.
+ From the statement below you can see that normally SymForm just allows
+ the action by changing focus to the requested field.
+
+ This is where field validation could occur. For example if you didn't
+ want the user to be able to leave field 10 until a value between
+ 6 and 18 was entered you could simply add
+ IF VALUE(RESPID)=10 AND (VALUE(RESPVA)<6 OR VALUE(RESPVA)>18) THEN
+   RESPSF="10"
+
+ Some procedures to help validate common fields will be placed in
+ RD.SYMFORM.PRO. The current ones are:
+
+ FIXPHONENUMBER - This procedure will right justify a phone number and
+                  ensure that it is 7 or 10 characters long.
+                  Ex:  IF VALUE(RESPID)=5 THEN
+                         CALL FIXPHONENUMBER
+]
+PROCEDURE PROCESSFIELDEVENT
+  IF RESPSP<>"" THEN
+    WINDOWSSEND(332,"SP="+RESPSP)
+  IF RESPSF<>"" THEN
+    WINDOWSSEND(332,"SF="+RESPSF)
+END
+
+
+[Values passed will be RESPTID to let you know what tool bar control
+ was used and RESPTVA to respond back what item was selected.
+]
+
+
+  #INCLUDE "RD.SYMFORM.PRO"
+  #INCLUDE "RD.NAME.AND.ACCOUNT.PRO"
+  #INCLUDE "RD.STICKYNOTESACCOUNT.PRO"
+  #INCLUDE "POA.AFFIDAVIT.INC"
+  #INCLUDE "POA.AFFIDAVIT.SYMFORM"
+  #INCLUDE "MAILADDRESS.PRO"
+  #INCLUDE "RD.SPELL.PRO"
+  #INCLUDE "MVP.PRO"
+  #INCLUDE "SENDBUTTON.PRO"
+
+
